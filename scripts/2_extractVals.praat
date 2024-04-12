@@ -15,7 +15,7 @@
 
 # Which participant?
 form Select a participant
-	sentence fileID bi01
+	sentence fileID ne03
 endform
 
 # Where to save data
