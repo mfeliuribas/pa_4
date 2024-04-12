@@ -4,7 +4,7 @@ output: github_document
 
 ---
 
-**Author**: Your name here  
+**Author**: Meritxell Feliu Ribas  
 **Date**: Last update: `r Sys.time()`
 
 
@@ -15,12 +15,12 @@ output: github_document
   Describe your hypotheses
 -->
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+## Assignment description
+In this assignment, I learnt how to manage a "bigger" project with production data. Since these data were not collected by me, I started the assignment by taking a look at all README files in order to better understand the project. After, I started working on the Praat part: I normalized the scale peak intensity by using script 0 and created the needed textgrids with script 1. In this script, I had to change the participant ID (e.g., bi02, ne01, etc.) and replace the "Xs" with 45, which is the number of wav files for each participant. I then manually segmented each wav file and ran script 2 to extract the values (f1, f2, vot) and get the data. In order to make script 2 work, I had to add the participant ID and delete a #, because it affected that line code. The # sign is used to add comments, so Praat could not run that line, which was necessary for the loop to work. Afterwards, I tidied the data, got some descriptive stats, and created some plots in R Studio. 
+
+
+## Hypothesis
+The data come from 3 Spanish-English bilinguals and 3 English speaking learners of Spanish. Considering that Spanish and English are different in terms of VOT (VOT values for /p,t,k/ in Spanish are shorter ['short-lag'] compared to those of English ['long-lag']), I expect L2 learners to have longer VOT values than the Spanish-English bilinguals due to the influence of English, their L1. 
 
 
 # Prep
@@ -29,10 +29,14 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 ```{r}
 #| label: load-libs
-#| echo: false 
 #| warning: false 
 #| message: false
 # Load libraries here
+
+library("here")
+library("readr")
+library("tidyverse")
+library("dplyr")
 
 ```
 
@@ -43,6 +47,14 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 # You need to get all the files in the 'data' directory and combine them
 # Check previous examples we did in class 
 
+data <- list.files(path = here("data"),
+           pattern = ".csv",
+           full.names = TRUE) %>%
+  read_csv()
+
+summary(data)
+glimpse(data)
+
 ```
 
 ## Tidy data
@@ -52,6 +64,25 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 # Convert from long to wide or wide to long format as necessary (check 
 # examples from class)
 # Create any other relevant variables here 
+
+data_final <- data %>%
+  separate(
+    col = fileID,
+    into = c("participant", "word"),
+    sep = "_") %>%
+  mutate(
+    group = case_when(
+      startsWith(participant, "bi") ~ "bilinguals",
+      startsWith(participant, "ne") ~ "L2ers")) %>%
+  relocate(
+    "group", .before = "participant") %>%
+ separate(
+    col = word,
+    into = c("word", "trial"),
+    sep = 4) %>%
+  mutate(
+    trial = ifelse(trial == "", 0, trial)) %>%
+select(!(notes))
 
 ```
 
@@ -64,16 +95,149 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 # Give some descriptive summaries of your data 
 # Display your descriptives in a table (try knitr::kable())
 
+# Overall f1, f2, and vot mean values and sd for each group
+data_final %>%
+  group_by(group) %>%
+  summarize(
+    f1_mean = mean(f1), 
+    f1_sd = sd(f1),
+    f2_mean = mean(f2),
+    f2_sd = sd(f2),
+    vot_mean = mean(vot),
+    vot_sd = sd(vot)) %>%
+  mutate(
+    group = case_when(
+      group == "bilinguals" ~ "Bilinguals", 
+      group == "L2ers" ~ "L2 learners")) %>%
+  knitr::kable(
+    col.names = c("Group", "F1 mean", "F1 sd", "F2 mean", "F2 sd", "VOT mean", "VOT sd"), 
+    caption = "Table 1. Overall mean values and standard deviations for all acoustic measures by group")
+
+# Overall f1, f2, and vot mean values and sd for each participant
+data_final %>%
+  group_by(group, participant) %>%
+  summarize(
+    f1_mean = mean(f1), 
+    f1_sd = sd(f1),
+    f2_mean = mean(f2),
+    f2_sd = sd(f2),
+    vot_mean = mean(vot),
+    vot_sd = sd(vot)) %>%
+  mutate(
+    group = case_when(
+      group == "bilinguals" ~ "Bilinguals", 
+      group == "L2ers" ~ "L2 learners")) %>%
+  knitr::kable(
+    col.names = c("Group", "Participant", "F1 mean", "F1 sd", "F2 mean", "F2 sd", "VOT mean", "VOT sd"), 
+    caption = "Table 2. Overall mean values and standard deviations for all acoustic measures by participant")
+
+# Overall vot mean values and sd for each group
+data_final %>%
+  group_by(group) %>%
+  summarize(
+    vot_mean = mean(vot),
+    vot_sd = sd(vot)) %>%
+  mutate(
+    group = case_when(
+      group == "bilinguals" ~ "Bilinguals", 
+      group == "L2ers" ~ "L2 learners")) %>%
+  knitr::kable(
+    col.names = c("Group", "VOT mean", "VOT sd"), 
+    caption = "Table 3. Overall mean values and standard deviations for VOT by group")
+
+# Overall vot mean values and sd for each participant
+data_final %>%
+  group_by(group, participant) %>%
+  summarize(
+    vot_mean = mean(vot),
+    vot_sd = sd(vot)) %>%
+  mutate(
+    group = case_when(
+      group == "bilinguals" ~ "Bilinguals", 
+      group == "L2ers" ~ "L2 learners")) %>%
+  knitr::kable(
+    col.names = c("Group", "Participant", "VOT mean", "VOT sd"), 
+    caption = "Table 4. Overall mean values and standard deviations for VOT by participant")
+
 ```
 
 ## Visualization
+
+### Plots of the VOT values
 
 ```{r}
 #| label: plots 
 #| fig.retina: 2
 # Include some plots here
 
+data_final %>%
+  ggplot() +
+  aes(x = group, y = vot, fill = group) +
+  # facet_wrap(. ~ group) +
+  geom_boxplot(show.legend = FALSE) +
+  scale_fill_viridis_d(name = NULL, end = 0.9) +
+  labs(y = "VOT values", y = "Group", title = "Figure 1. VOT as a function of group")
+
+data_final %>%
+  ggplot() +
+  aes(x = participant, y = vot, fill = group) +
+  geom_boxplot(show.legend = FALSE) +
+  scale_fill_viridis_d(name = NULL, end = 0.9) +
+  labs(x = "Participant", y = "VOT values", title = "Figure 2. VOT as a function of participant and group")
+
+data_final %>%
+  ggplot() +
+  aes(x = word, y = vot, color = group) +
+  geom_point() +
+  scale_color_viridis_d(name = NULL, end = 0.9) +
+  labs(x = "Words", y = "VOT values", title = "Figure 3. VOT as a function of word and group")
+
 ```
+
+```{r,fig.width = 9.4}
+#| label: plot 
+#| fig.retina: 2
+# Include some plots here
+
+data_final %>%
+  ggplot() +
+  aes(x = word, y = vot, color = participant) +
+  facet_wrap(. ~ group) +
+  geom_point() +
+  scale_color_viridis_d(name = "Participants", end = 0.9) +
+  theme(legend.position = "bottom",
+  legend.background = element_blank()) +
+  labs(x = "Words", y = "VOT values", title = "Figure 4. VOT as a function of word, participant and group") 
+
+```
+
+
+### Examples of the production data
+
+Figure 5. Waveform of the word *kaka* produced by a participant from the bilingual group.
+```{r}
+#| label: load-pic1
+#| echo: false 
+#| warning: false 
+#| message: false
+
+knitr::include_graphics("./figures/bi01_kaka.png")
+
+```
+</br></br>
+
+Figure 6. Waveform of the word *kaka* produced by a participant from the L2 learners group.
+```{r}
+#| label: load-pic2
+#| echo: false 
+#| warning: false 
+#| message: false
+
+knitr::include_graphics("./figures/ne01_kaka.png")
+
+```
+
+
 
 <!-- 
 Also include a professional looking figure illustrating an example of the acoustics 
@@ -109,11 +273,9 @@ What did you enjoy? What did you hate? What did you learn?
 What would you do differently?
 -->
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+I predicted that English L2 learners of Spanish would have longer VOT values due to the influence from their L1, compared to Spanish-English bilinguals. Although no models were created and, thus, it cannot be assured that there is a significant difference between groups and that English and/or Spanish age of acquisition were significant predictors (I do not have these kind of data), the calculated means and the plots indicate that the VOT values of the participants in the L2 learners group were longer (mean = 34.25) than those in the bilingual group (mean = 21.01). Furthermore, Figures 1 and 2 suggest that there is more variability within the L2 learners group. Further analysis is needed to confirm these observations. 
+
+**Some reflections:**
+This last programming assignment was quite long. Although I would not say that it was very difficult, the Praat part was, indeed, tedious. I tried to use the function praatpicture() to include a couple of images from the wav files. However, it did not work (even though I tried for a while). Thanks to that, I learnt how to create and export pictures from Praat! 
 
 </br></br>
