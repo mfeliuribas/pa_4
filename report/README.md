@@ -2,7 +2,7 @@ Programming assignment 4
 ================
 
 **Author**: Meritxell Feliu Ribas  
-**Date**: Last update: 2024-04-12 19:34:41
+**Date**: Last update: 2024-04-12 20:00:52
 
 # Overview
 
@@ -53,8 +53,7 @@ library("dplyr")
 ## Load data
 
 ``` r
-# You need to get all the files in the 'data' directory and combine them
-# Check previous examples we did in class 
+# Load multiple csv files at once and store them in vector
 
 data <- list.files(path = here("data"),
            pattern = ".csv",
@@ -106,9 +105,11 @@ glimpse(data)
 ## Tidy data
 
 ``` r
-# Convert from long to wide or wide to long format as necessary (check 
-# examples from class)
-# Create any other relevant variables here 
+# Tidy and manipulate data
+# Separate two variables: participant and word
+# Create a new variable and relocate it within the dataframe: group
+# Separate two variables: word and trial (it will help when doing the plots)
+# Delete column: notes
 
 data_final <- data %>%
   separate(
@@ -135,8 +136,8 @@ select(!(notes))
 ## Descriptives
 
 ``` r
-# Give some descriptive summaries of your data 
-# Display your descriptives in a table (try knitr::kable())
+# Calculate mean values (+ sd) for group and participant
+# Display descriptives in a table
 
 # Overall f1, f2, and vot mean values and sd for each group
 data_final %>%
@@ -259,8 +260,7 @@ participant
 ### Plots of the VOT values
 
 ``` r
-# Include some plots here
-
+# Plot 1: VOT + group
 data_final %>%
   ggplot() +
   aes(x = group, y = vot, fill = group) +
@@ -273,6 +273,7 @@ data_final %>%
 <img src="README_files/figure-gfm/plots-1.png" width="672" />
 
 ``` r
+# Plot 2: VOT + participant + group
 data_final %>%
   ggplot() +
   aes(x = participant, y = vot, fill = group) +
@@ -284,6 +285,7 @@ data_final %>%
 <img src="README_files/figure-gfm/plots-2.png" width="672" />
 
 ``` r
+# Plot 3: VOT + word + group
 data_final %>%
   ggplot() +
   aes(x = word, y = vot, color = group) +
@@ -295,8 +297,7 @@ data_final %>%
 <img src="README_files/figure-gfm/plots-3.png" width="672" />
 
 ``` r
-# Include some plots here
-
+# Plot 4: VOT + word + participant + group
 data_final %>%
   ggplot() +
   aes(x = word, y = vot, color = participant) +

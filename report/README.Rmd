@@ -44,8 +44,8 @@ library("dplyr")
 
 ```{r}
 #| label: load-data
-# You need to get all the files in the 'data' directory and combine them
-# Check previous examples we did in class 
+
+# Load multiple csv files at once and store them in vector
 
 data <- list.files(path = here("data"),
            pattern = ".csv",
@@ -61,9 +61,11 @@ glimpse(data)
 
 ```{r}
 #| label: tidy-data
-# Convert from long to wide or wide to long format as necessary (check 
-# examples from class)
-# Create any other relevant variables here 
+# Tidy and manipulate data
+# Separate two variables: participant and word
+# Create a new variable and relocate it within the dataframe: group
+# Separate two variables: word and trial (it will help when doing the plots)
+# Delete column: notes
 
 data_final <- data %>%
   separate(
@@ -92,8 +94,8 @@ select(!(notes))
 
 ```{r}
 #| label: descriptive-stats
-# Give some descriptive summaries of your data 
-# Display your descriptives in a table (try knitr::kable())
+# Calculate mean values (+ sd) for group and participant
+# Display descriptives in a table
 
 # Overall f1, f2, and vot mean values and sd for each group
 data_final %>%
@@ -168,8 +170,8 @@ data_final %>%
 ```{r}
 #| label: plots 
 #| fig.retina: 2
-# Include some plots here
 
+# Plot 1: VOT + group
 data_final %>%
   ggplot() +
   aes(x = group, y = vot, fill = group) +
@@ -178,6 +180,8 @@ data_final %>%
   scale_fill_viridis_d(name = NULL, end = 0.9) +
   labs(y = "VOT values", y = "Group", title = "Figure 1. VOT as a function of group")
 
+
+# Plot 2: VOT + participant + group
 data_final %>%
   ggplot() +
   aes(x = participant, y = vot, fill = group) +
@@ -185,6 +189,8 @@ data_final %>%
   scale_fill_viridis_d(name = NULL, end = 0.9) +
   labs(x = "Participant", y = "VOT values", title = "Figure 2. VOT as a function of participant and group")
 
+
+# Plot 3: VOT + word + group
 data_final %>%
   ggplot() +
   aes(x = word, y = vot, color = group) +
@@ -197,8 +203,8 @@ data_final %>%
 ```{r,fig.width = 9.4}
 #| label: plot 
 #| fig.retina: 2
-# Include some plots here
 
+# Plot 4: VOT + word + participant + group
 data_final %>%
   ggplot() +
   aes(x = word, y = vot, color = participant) +
